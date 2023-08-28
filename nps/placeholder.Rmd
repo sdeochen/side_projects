@@ -1,0 +1,8 @@
+---
+title: "NPS simulations"
+author: "stephanie chen"
+date: '2023-08-28'
+output: html_document
+---
+
+Placeholder
