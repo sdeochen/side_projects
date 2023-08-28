@@ -1,0 +1,353 @@
+---
+title: "NPS Simulations - Sample Size Cheat Sheet"
+author: "Stephanie Chen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      message = F,
+                      warning = F)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(grid)
+library(gridExtra)
+
+setwd('~/Library/CloudStorage/OneDrive-Knex/H1_2023/survey_weighting/voc_rep/docs')
+
+
+#get color palette
+rktcol <- c('#910D22', #rocket red
+            '#5B3C9C', #darkish purple
+            '#545453', #dark gray
+            '#B2B2B2', #very light gray
+            '#FA9C9C', #pink
+            '#C8A1FF', #lighter purple
+            '#1C1B1A' #black
+)
+
+```
+
+
+This simulation cheat sheet is to help researchers approximate what sort of sample size they might need to estimate a population's NPS with good accuracy.
+
+### Sample Size Needed for 5 and 7% Margin of Error 
+
+The table approximates the sample size you need to get within 5 points of the true NPS 95% of the time you take a sample. I also plotted the sample size needed to get within 7 points of the true NPS, 95% of the time.
+
+Based on the results, the sample you need depends on what the true NPS is. You can use prior experience/research and some critical thinking to guess at what that NPS might be.
+
+Ballparked suggested sample sizes based on NPS:
+
+```{r}
+table_to_use <- data.frame(`NPS score` = c(0,
+                                           20,
+                                           40,
+                                           50,
+                                           60,
+                                           65,
+                                           70,
+                                           75,
+                                           80,
+                                           85),
+                           `Sample size 5pct MOE` = c(1250,
+                                                    1250,
+                                                    1000,
+                                                    1000,
+                                                    750,
+                                                    750,
+                                                    500,
+                                                    500,
+                                                    500,
+                                                    300),
+                           `Sample size 7pct MOE` = c(600,
+                                                    600,
+                                                    500,
+                                                    500,
+                                                    350,
+                                                    350,
+                                                    300,
+                                                    250,
+                                                    250,
+                                                    125))
+
+table_to_use %>%
+  kbl() %>%
+  kable_paper(c("striped", "hover"), full_width = FALSE)
+
+```
+
+
+### Margin of Error Simulation Results
+
+The plots below show the results.  
+
+Notes on how to read the plots:  
+
+* The black line shows the true NPS of that population  
+* The purple line shows the NPS score 5 points above the true NPS  
+* The red line shows the NPS score 7 points above the true NPS  
+* Where the shaded area and line intersect shows us what sample size we need to hit +/- 5 points (or +/- 7 points) from the true value 95% of the time.
+
+![simulation results](images/margin_of_error_simulation.png)
+
+
+
+### Simulation code
+
+Step 1: Create the hypothetical "populations" that we will sample from and compute sample NPS. I will vary the NPS score of the population itself. NPS can be varied by changing the % promoters, % detractors, or both. I won't simulate every potential population but will test some groups based on how we typically see NPS distributed for our main surveys.
+
+```{r create populations and specify parameters, echo = T, eval = F}
+
+#set population to 50k. Can re-do simulation with different sizes if needed.
+pop_size <- 50000
+
+#set number of iterations you want for your simulations
+times <- 1000
+
+#sample sizes to test
+sample_sizes <- c(50, 100, 200, 400, 600, 800, 1000, 1500, 2000)
+
+#for population NPS of 85, I'll make 90% promoters, 5% passive, and 5% detractors
+
+p85 <- c(rep("Promoter", .9 * pop_size), 
+         rep("Passive", .05 * pop_size),
+         rep("Detractor", .05 * pop_size))
+
+p80 <- c(rep("Promoter", .87 * pop_size), 
+         rep("Passive", .06 * pop_size),
+         rep("Detractor", .07 * pop_size))
+
+p75 <- c(rep("Promoter", .82 * pop_size), 
+         rep("Passive", .11 * pop_size),
+         rep("Detractor", .07 * pop_size))
+
+p70 <- c(rep("Promoter", .79 * pop_size), 
+         rep("Passive", .12 * pop_size),
+         rep("Detractor", .09 * pop_size))
+
+p65 <- c(rep("Promoter", .75 * pop_size), 
+         rep("Passive", .15 * pop_size),
+         rep("Detractor", .1 * pop_size))
+
+p60 <- c(rep("Promoter", .72 * pop_size), 
+         rep("Passive", .16 * pop_size),
+         rep("Detractor", .12 * pop_size))
+
+p45 <- c(rep("Promoter", .65 * pop_size), 
+         rep("Passive", .15 * pop_size),
+         rep("Detractor", .20 * pop_size))
+p40 <- c(rep("Promoter", .62 * pop_size), 
+         rep("Passive", .16 * pop_size),
+         rep("Detractor", .22 * pop_size))
+
+p20 <- c(rep("Promoter", .50 * pop_size), 
+         rep("Passive", .20 * pop_size),
+         rep("Detractor", .30 * pop_size))
+
+
+p0 <- c(rep("Promoter", .35 * pop_size), 
+         rep("Passive", .30 * pop_size),
+         rep("Detractor", .35 * pop_size))
+
+
+#these options are for testing same NPS scores but different distributions
+p40_b <- c(rep("Promoter", .70 * pop_size), 
+         rep("Passive", 0 * pop_size),
+         rep("Detractor", .30 * pop_size))
+
+
+p0_b <- c(rep("Promoter", .1 * pop_size), 
+         rep("Passive", .8 * pop_size),
+         rep("Detractor", .1 * pop_size))
+```
+
+Then I wrote some functions to do sampling and computing NPS, and getting the 95% intervals.
+
+```{r functions, echo = T, eval = F}
+
+
+nps <- function(x) {
+  step1 <- length(x[x == "Promoter"])/length(x) * 100
+  step2 <- length(x[x == "Detractor"])/length(x) * 100
+  return(step1 - step2)
+}
+
+samp <- function(data_set, sample_size){
+  output <- sample(data_set, sample_size, replace = F)
+  return(output)
+}
+
+sample_function <- function(data_set, sample_size, num_iterations) {
+  
+  output <- replicate(num_iterations, samp(data_set, sample_size))
+  output <- data.frame(
+    output
+  )
+  
+  return(output)
+}
+  
+test_matrix <- sample_function(p45, 5, 10)
+
+test_output <- apply(
+    sample_function(p40, 10, 5), 
+    MARGIN = 2, 
+    FUN = nps)
+
+
+#get median nps for all the samples you took, as well as the 95% confidence interval, which would be the NPS value at position .025 and .975
+all_nps <- function(data_set, sample_size, num_iterations) {
+  output <- apply(
+    sample_function(data_set, sample_size, num_iterations), 
+    MARGIN = 2, 
+    FUN = nps) %>%
+    sort()
+
+    lower_position <- round(.025 * length(output), 0)
+    upper_position <- round(.975 * length(output), 0)
+  
+    results <- data.frame(median_nps = round(median(output), 1),
+                          lower_bound = round(output[lower_position], 1),
+                          upper_bound = round(output[upper_position], 1)) %>%
+      mutate(range = upper_bound - lower_bound)
+  
+  return(results)
+}  
+
+
+```
+
+
+Code for producing the results and the plots. I ran the simulations, saved the image, and knit the final file just reading in the image.
+
+```{r fig.height = 10, fig.width = 13, eval = F, echo = T}
+
+
+
+plotres <- function(x, true_nps) {
+  output <- ggplot(x, aes(sample_size, upper_bound)) +
+  geom_ribbon(aes(ymin = lower_bound, ymax = upper_bound,
+                  fill = "purple",
+                alpha = .1)) +
+  geom_line(aes(sample_size, true_nps + 7), #7% margin of error
+            color = rktcol[1],
+            alpha = .8) +
+    geom_line(aes(sample_size, true_nps + 5), #5% margin of error
+            color = rktcol[2],
+            alpha = .8) +
+  geom_line(aes(sample_size, true_nps), #true population NPS
+            color = 'black') +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "none",
+        axis.title = element_blank()) +
+  scale_fill_manual(values = rktcol[6]) 
+    
+  
+  return(output)
+}
+  
+#plots for each simulation results
+
+make_the_plot <- function(data_set, true_nps) {
+  sim_results <- data.frame(sample_size = sample_sizes,
+                          median_nps = NA,
+                          lower_bound = NA,
+                          upper_bound = NA,
+                          range = NA)
+  
+  for(i in 1:length(sample_sizes))
+  sim_results[i, c(2:5)] <- all_nps(data_set, sample_sizes[i], times)
+  
+  output <- plotres(sim_results, true_nps)
+  
+  return(output)
+}
+
+
+
+#for sample of NPS = 0, 20, etc.
+pp0 <- make_the_plot(p0, 0)
+pp20 <- make_the_plot(p20, 20)
+pp40 <- make_the_plot(p40, 40)
+pp45 <- make_the_plot(p45, 45)
+pp60 <- make_the_plot(p60, 60)
+pp65 <- make_the_plot(p65, 65)
+pp70 <- make_the_plot(p70, 70)
+pp75 <- make_the_plot(p75, 75)
+pp80 <- make_the_plot(p80, 80)
+pp85 <- make_the_plot(p85, 85)
+
+grid.arrange(pp0,
+             pp20,
+             pp40,
+             pp45,
+             pp60,
+             pp65,
+             pp70,
+             pp75,
+             pp80,
+             pp85,
+             ncol = 3)
+
+
+
+```
+
+
+### Check different distributions for MOE
+
+The same NPS score can be produced by 2 different populations (for example, an NPS of 40 can result from 65% promoters - 25% detractors, *or* 45% promoters and 5% detractors). I ran my simulation keeping detractors and passives fairly balanced, since that is what I have observed with our typical NPS data. But do the required sample sizes for 5 and 7% margins of error change when the distribution producing the same NPS changes?
+
+Let's estimate the sample size needed for NPS = 40 (70% promoters, 30% detractors, 0 passives), and compare that to the original simulation of NPS = 40 (62% promoters, 22% detractors, 16% passive).
+
+
+Let's also estimate for an NPS = 0 (10% promoters, 10% detractors, 80% passives), compared to the original simulation of NPS = 0 (35% promoters, 35% detractors, 30% passive).
+
+It may be that as you get closer to NPS = 0, the more passives you have (relative to the full distribution), the lower your sample size needs to be.
+
+So there are 2 opposing forces at play for determining NPS sample size. 
+
+**One is NPS itself**.   
+The closer to 100 (or -100), the smaller your sample size needs to be to get 5% margin of error. Conversely, the closer NPS is to 0, the larger your sample size needs to be to achieve 5% margin of error 95% of the time.
+
+This makes sense: after you account for promoters, the remaining % of respondents logically have to split between detractors and passives. The closer NPS is to 100, logically the fewer remaining respondents you have to allocate to these other 2 groups. The extremes (both 100 and -100) constrict how many other types of respondents you can have. 
+
+**The other is share of passives (maybe).**  
+As you get closer to 0, you can in theory have more room to alter how you split the remaining respondents (detractors vs passives). If you have a lower share of passives, the higher your sample size needs to be. If passives are more evenly split with detractors, then your sample size can be smaller. (That's a hypothesis - I should simulate this more to test it.)
+
+
+
+```{r eval = T, echo = T}
+
+new_table <- data.frame(group = c("Original NPS 40",
+                       "New NPS 40",
+                       "Original NPS 0",
+                       "New NPS 0"),
+             promoters_pct = c(62, 70, 35, 10),
+             detractors_pct = c(22, 30, 35, 10),
+             passive_pct = c(16, 0, 30, 80),
+             recommended_n_5pct = c(1000, 1250, 1250, 400),
+             recommended_n_7pct = c(500, 600, 600, 150))
+new_table %>%
+  kbl() %>%
+  kable_paper(full_width = F)
+```
+![](images/margin_of_error_simulation2.png){width=50%}
+         
+```{r eval = F, echo = T}
+#p40_b
+pp40b <- make_the_plot(p40_b, 40)
+
+
+#p0_b
+pp0b <- make_the_plot(p0_b, 0)
+
+grid.arrange(pp40, pp40b,
+             pp0, pp0b,
+             ncol = 2)
+```
+
+

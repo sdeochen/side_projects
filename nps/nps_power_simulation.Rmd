@@ -1,0 +1,639 @@
+---
+title: "NPS Simulations - Power Cheat Sheet"
+author: "Stephanie Chen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      message = F,
+                      warning = F)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(grid)
+library(gridExtra)
+
+setwd('~/Library/CloudStorage/OneDrive-Knex/H1_2023/survey_weighting/voc_rep/docs')
+
+
+#get color palette
+rktcol <- c('#910D22', #rocket red
+            '#5B3C9C', #darkish purple
+            '#545453', #dark gray
+            '#B2B2B2', #very light gray
+            '#FA9C9C', #pink
+            '#C8A1FF', #lighter purple
+            '#1C1B1A' #black
+)
+
+#get simulation results
+
+#ran w/ 500 iterations
+#sim_results <- read.csv('powersim_500.csv') %>%
+#  select(-X)
+
+
+sim_results <- read.csv('powersim_1000.csv') %>%
+  select(-X)
+
+sim_results_drop <- read.csv('powersim_1000_drop.csv') %>%
+  select(-X)
+
+```
+
+### What is statistical power?
+
+Power is the probability of finding a statistically significant effect *if there is an effect to be found.* Sometimes a product launch, process change, or marketing campaign will have a positive (or negative) effect on the overall population, but our sample may fail to pick that up. If our sample size is too small, our statistical tests have a higher risk of returning *false negatives* - that is, they say we didn't have an impact when in fact we did. We can avoid this scenario by committing to larger sample sizes before running statistical analyses to test the impact of our work.
+
+
+### Sample size cheat sheets
+
+These cheat sheet tables are intended to help researchers estimate what sort of sample size they might need to detect differences between groups with 80% power, 70% power, and 60% power. Higher power means there's a higher chance you will pick up on an effect if it's there, and lower power means there's a higher risk you will miss an effect if it's there.
+
+I *ballparked* suggested sample sizes based on the simulation results. You can determine the sample size needed to detect an increase in NPS based on:  
+
+(1) how confident you want to be that you didn't miss anything (e.g., 80% certain I caught it)  
+
+(2) the baseline or control NPS score   
+
+(3) how much you think it increased by (I simulated 5 points and 10 points)
+
+
+**Example**: If you think a really big customer service change could increase company-level NPS by 5 points, and the baseline NPS is 60, you'd need about 4,250 NPS survey respondents in the baseline group and 4,250 survey respondents in the treatment group to detect that 5 point increase in the population 80% of the time.
+
+
+```{r nps power cheatsheet tables, eval = F}
+
+table_to_use_60 <- tibble(`Baseline NPS` = c(30,
+                                                        40,
+                                                        50, 
+                                                        60,
+                                                        70, 
+                                                        80),
+                           `5 pt increase` = c(
+                             'Over 5k',
+                             'Over 5k',
+                             '5,000',
+                             '3,000',
+                             '2,500',
+                             '2,000'
+                           ),
+                           `10 pt increase` = c(
+                             '1,000',
+                             '1,000', 
+                             '1,000',
+                             '750',
+                             '750',
+                             '500'
+                           ))
+
+
+
+table_to_use_70 <- tibble(`Baseline NPS` = c(30,
+                                                        40,
+                                                        50, 
+                                                        60,
+                                                        70, 
+                                                        80),
+                           `5 pt increase` = c(
+                             'Over 5k',
+                             'Over 5k',
+                             'Over 5k',
+                             '3,500',
+                             '3,000',
+                             '2,250'
+                           ),
+                           `10 pt increase` = c(
+                             '1,500',
+                             '1,500', 
+                             '1,250',
+                             '1,000',
+                             '900',
+                             '500'
+                           ))
+
+table_to_use_80 <- tibble(`Baseline NPS` = c(30,
+                                                        40,
+                                                        50, 
+                                                        60,
+                                                        70, 
+                                                        80),
+                           `5 pt increase` = c(
+                             'Over 5k',
+                             'Over 5k',
+                             'Over 5k',
+                             '4,250',
+                             '3,500',
+                             '4,750'
+                           ),
+                           `10 pt increase` = c(
+                             '1,750',
+                             '1,750', 
+                             '1,500',
+                             '1,000',
+                             '1,000',
+                             '600'
+                           ))
+
+
+
+
+#side by side tables, but can't format
+#kbl(list(table_to_use_60, table_to_use_70, table_to_use_80)) %>%
+#  kable_paper("striped", full_width = F) 
+```
+
+<center>
+
+![](images/power_table_nps_lift.png){width=80%}
+
+</center>
+
+
+When you can't get a powerful sample to detect the lift you expect, you could at least rule out that you have tanked NPS with your launch or product.
+
+For different baseline amounts, I found the sample size needed to be somewhat sure we didn't tank NPS. I simulated a 20 point drop and a 40 point drop with different baselines. Generally, the sample size needed to be 60, 70, and 80% confident that you didn't tank NPS is smaller.
+
+```{r nps drop cheatsheet tables}
+
+table_to_use_60d <- tibble(`Baseline NPS` = c(40, 50, 60, 70, 80),
+                           `20 pt drop` = c(350, 300, 300, 250, 180),
+                           `40 pt drop` = c(75, 75, 75, 50, 50))
+
+
+
+table_to_use_70d <- tibble(`Baseline NPS` = c(40, 50, 60, 70, 80),
+                           `20 pt drop` = c(380, 320, 320, 310, 200),
+                           `40 pt drop` = c(100, 100, 100, 65, 65))
+
+table_to_use_80d <- tibble(`Baseline NPS` = c(40, 50, 60, 70, 80),
+                           `20 pt drop` = c(470, 440, 440, 375, 250),
+                           `40 pt drop` = c(125, 125, 110, 100, 100))
+
+
+```
+
+<center>
+
+![](images/power_table_nps_drop.png){width=80%}
+
+</center>
+
+### Simulation Results Plot
+
+Below are plotted results of the simulations I ran, and in the sections after that I have the actual simulation code.
+
+How to read the results:  
+
+* The **y-axis** is the % of times the sampled results were significantly different (p < .05). The bigger the sample size, the higher the chance that the true difference in the population will be significantly detected.
+* The **x-axis** is the sample size *per group*, so for example if we are comparing a treatment group and a control group, 500 on the axis means there is a total of 1,000 NPS scores in the data set.
+* The **solid horizontal lines** show the % of the time that the results will be statistically significant 80% (red), 70% (purple), and 60% of the time (gray).
+* The **colored curves** represent different baseline NPS scores. The **plot titles** show how many NPS point increases they are being compared against. So if your baseline or control NPS score is 80, and you hypothesize your NPS lift will be a 5 point increase (NPS = 85), and you want to be 60% sure that you detected that increase if it happened, you'd need a sample of just under 2000 per group (baseline & treatment group).
+* Where the curves cross the solid lines is approximately the sample size you will aim for for different degrees of power (80%, or 70%, or 60%).
+
+```{r simulation results plot}
+
+
+ggplot(sim_results %>%
+         mutate(baseline_nps = factor(baseline_nps)), aes(sample_size, pct_sig, group = baseline_nps, color = baseline_nps)) +
+  geom_line() +
+  geom_line(aes(x = sample_size, y = 80),
+            color = "black",
+            show.legend = F) +
+  geom_line(aes(x = sample_size, y = 70),
+            color = "grey 28",
+            show.legend = F) +
+  geom_line(aes(x = sample_size, y = 60),
+            color = "grey68 ",
+            show.legend = F) +
+  facet_wrap(~nps_increase) +
+  theme_bw(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+
+For big effects in NPS, sample sizes don't need to be so large. Below you can see % of the time we'd get significant results if NPS dropped by 20 points (left) or 40 points (right), as sample sizes increases (x-axis) and depending on different baseline NPS values (colored lines).
+
+
+```{r big drop simulation results plot}
+
+
+ggplot(sim_results_drop %>%
+         mutate(baseline_nps = factor(baseline_nps)), aes(sample_size, pct_sig, group = baseline_nps, color = baseline_nps)) +
+  geom_line() +
+  geom_line(aes(x = sample_size, y = 80),
+            color = "black",
+            show.legend = F) +
+  geom_line(aes(x = sample_size, y = 70),
+            color = "grey 28",
+            show.legend = F) +
+  geom_line(aes(x = sample_size, y = 60),
+            color = "grey68 ",
+            show.legend = F) +
+  facet_wrap(~nps_drop) +
+  theme_bw(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+### Simulation code
+
+Step 1: Create the hypothetical "populations" that we will sample from and compute sample NPS.   
+
+Step 2: Write functions to take samples of specified sizes from specified populations, compute the NPS score and 95% CI.  
+
+Step 3: Write functions to take two samples from 2 populations, get NPS and 95% CI, and flag the cases where the difference is stat sig.  
+
+Step 4: Iterate through the various hypothetical populations and look at % of time we (rightfully) detect differences vs. not.  
+
+#### Pre-work  
+
+**How NPS looks for different distributions**
+
+I will vary the NPS score of the population itself. NPS can be varied by changing the % promoters, % detractors, or both. I won't simulate every potential population but will test some groups based on how we typically see NPS distributed for our main surveys.
+
+
+Below are plots for what NPS is like if the remaining respondents that aren't promoters are...  
+
+* EQUAL. That is, 1/2 are passive and 1/2 are promoters
+* MOSTLY DETRACTORS. That is, 2/3 are detractors and 1/3 are passive
+* MOSTLY PASSIVE. That is, 1/3 are detractors and 1/3 are passive
+
+This visual shows just how much more sensitive NPS is when there are fewer shares of passives vs. a greater share of passives. 
+
+You can also see what the NPS would be depending on % of promoters and the distribution. For example, if 50% of respondents are promoters, the NPS is 25 if the split is equal, 17 if they're mostly detractors, and 33 if they're mostly passive.
+
+```{r nps and distributions 1}
+
+#population makers
+promoters <- seq(0, 1, .05)
+
+passive_detractors <- function(x) {
+  output <- (1 - x)/2
+  return(output)
+}
+
+population_props1 <- data.frame(promoters = promoters,
+                               passive = passive_detractors(promoters),
+                               detractors = passive_detractors(promoters)) %>%
+  mutate(NPS = promoters - detractors,
+         type = "Equal")
+
+#adjust the function
+passive_detractors <- function(x) {
+  output <- data.frame(passive = (1 - x) * 1/3,
+  detractors = (1 - x) * 2/3)
+  return(output)
+}
+
+population_props2 <- data.frame(promoters = promoters,
+                               passive = passive_detractors(promoters)$passive,
+                               detractors = passive_detractors(promoters)$detractors) %>%
+  mutate(NPS = promoters - detractors,
+         type = "Mostly detractors")
+
+#adjust again
+passive_detractors <- function(x) {
+  output <- data.frame(passive = (1 - x) * 2/3,
+  detractors = (1 - x) * 1/3)
+  return(output)
+}
+
+population_props3 <- data.frame(promoters = promoters,
+                               passive = passive_detractors(promoters)$passive,
+                               detractors = passive_detractors(promoters)$detractors) %>%
+  mutate(NPS = promoters - detractors,
+         type = "Mostly passives")
+
+population_props <- rbind(population_props1, 
+                          population_props2,
+                          population_props3)
+
+ggplot(population_props, aes(promoters, NPS, group = type, color = type, label = round(NPS * 100, 0))) +
+  geom_line() +
+  geom_text() +
+  ggtitle("NPS by type of distribution")
+
+```
+
+### Actual simulation code  
+
+**Creating the population**
+
+I will simulate populations based on an even split between detractors and passives, since this is not uncommon in the real data that we work with. But keep in mind from the analyses that it is possible the results change when the distribution isn't split that way.
+
+
+```{r specify parameters, echo = T, eval = F}
+
+#set population to 50k. Can re-do simulation with different sizes if needed.
+pop_size <- 50000
+
+#set number of iterations you want for your simulations
+times <- 1000
+
+#sample sizes to test
+
+#original amount
+
+#sample_sizes <- c(50, 100, 250, 500, 1000)
+
+#sample_sizes <- c(100, 250, 500, 1000, 1500, 2000)
+
+#sample_sizes <- c(100, 250, 500, 1000, 1500, 2000, 3000, 4000, 5000)
+
+```
+
+
+```{r create populations, echo = T, eval = F}
+
+#this function lets you know what the proportion of promoters, passives, and detractors should be for a given NPS score, ASSUMING THAT the detractors and passives are split (which is not always true in real life)
+
+population_function <- function(nps_value) {
+  promoters <- (nps_value * 2 + 1)/3
+  detractors <- (1 - promoters)/2
+  
+  return(data.frame(promoters = promoters,
+                    detractors = detractors))
+}
+
+p90 <- c(rep("Promoter", .934 * pop_size), 
+         rep("Passive", .033 * pop_size),
+         rep("Detractor", .033 * pop_size))
+
+p85 <- c(rep("Promoter", .9 * pop_size), 
+         rep("Passive", .05 * pop_size),
+         rep("Detractor", .05 * pop_size))
+
+p80 <- c(rep("Promoter", .87 * pop_size), 
+         rep("Passive", .06 * pop_size),
+         rep("Detractor", .07 * pop_size))
+
+p75 <- c(rep("Promoter", .835 * pop_size), 
+         rep("Passive", .0825 * pop_size),
+         rep("Detractor", .0825 * pop_size))
+
+p70 <- c(rep("Promoter", .8 * pop_size), 
+         rep("Passive", .1 * pop_size),
+         rep("Detractor", .1 * pop_size))
+
+
+p65 <- c(rep("Promoter", .7667 * pop_size), 
+         rep("Passive", (0.1166666667 * pop_size) - 1),
+         rep("Detractor", 0.11667 * pop_size))
+
+
+p60 <- c(rep("Promoter", .73 * pop_size), 
+         rep("Passive", .135 * pop_size),
+         rep("Detractor", .135 * pop_size))
+
+p55 <- c(rep("Promoter", .70 * pop_size), 
+         rep("Passive", .15 * pop_size),
+         rep("Detractor", .15 * pop_size))
+
+p50 <- c(rep("Promoter", .668 * pop_size), 
+         rep("Passive", .166 * pop_size),
+         rep("Detractor", .166 * pop_size))
+
+
+
+p40 <- c(rep("Promoter", .6 * pop_size),
+         rep("Passive", .2 * pop_size),
+         rep("Detractor", .2 * pop_size))
+
+
+
+p35 <- c(rep("Promoter", .5666 * pop_size),
+         rep("Passive", .2167 * pop_size),
+         rep("Detractor", .2167 * pop_size))
+
+
+p30 <- c(rep("Promoter", .53 * pop_size), 
+         rep("Passive", .235 * pop_size),
+         rep("Detractor", .235 * pop_size))
+
+
+p20 <- c(rep("Promoter", (.4667 * pop_size - 1)), 
+         rep("Passive", .266667 * pop_size),
+         rep("Detractor", .266667 * pop_size))
+
+p10 <- c(rep("Promoter", .4 * pop_size), 
+         rep("Passive", .3 * pop_size),
+         rep("Detractor", .3 * pop_size))
+
+p0 <- c(rep("Promoter", .33333333 * pop_size + 1), 
+         rep("Passive", .3333333 * pop_size),
+         rep("Detractor", .3333333 * pop_size + 1))
+
+
+```
+
+Then I wrote some functions to do sampling and computing NPS scores, 95% CI, and then flagging whether sampled results from 2 populations is significant.
+
+```{r functions, echo = T, eval = F}
+
+
+nps <- function(x) {
+  step1 <- length(x[x == "Promoter"])/length(x) 
+  step2 <- length(x[x == "Detractor"])/length(x) 
+  nps <- step1 - step2
+  output <- data.frame(nps = nps,
+                       promoter = step1,
+                       detractor = step2,
+                       passive = 1 - step1 - step2,
+                       count = length(x))
+  return(output)
+}
+
+
+nps_table <- function(x) {
+  step1 <- data.frame(nps = nps(x)$nps,
+              Promoter = nps(x)$promoter,
+              Passive = nps(x)$passive,
+              Detractor = nps(x)$detractor,
+              Total_Count = nps(x)$count)
+    
+  #get variance
+  step1$var <- (1 - step1$nps)**2 * step1$Promoter +
+    (0 - step1$nps)**2 * step1$Passive +
+    (-1 - step1$nps)**2 * step1$Detractor
+  
+  #standard dev, se, and 95% CI bounds
+  step1 <- step1 %>%
+    mutate(sd = sqrt(var)) %>%
+    mutate(se = sd / sqrt(Total_Count)) %>%
+    mutate(ci95 = 1.96 * se) 
+  
+  #make percents instead of proportion
+  step1$nps <- round(step1$nps* 100, 0)
+  step1$lower <- step1$nps - round(step1$ci95 * 100, 2)
+  step1$upper <- step1$nps + round(step1$ci95 * 100, 2)
+
+  return(step1 %>%
+           select(nps,
+                  lower,
+                  upper))
+}
+
+
+
+
+
+
+
+
+samp <- function(data_set, sample_size){
+  output <- sample(data_set, sample_size, replace = F)
+  return(output)
+}
+
+sample_function <- function(data_set, sample_size, num_iterations) {
+  
+  output <- replicate(num_iterations, samp(data_set, sample_size))
+  output <- data.frame(
+    output
+  )
+  
+  return(output)
+}
+
+# You will use sample functions to create datasets and then use the nps_all function to get the final estimates
+# This way we're running shorter steps and can break it down if needed rather than having 1 long mega function
+test_matrix <- sample_function(p30, 5, 10)
+
+
+      
+#get median nps for all the samples you took, as well as the 95% confidence interval computed from formula
+all_nps <- function(data_set) {
+  num_iterations <- ncol(data_set)
+  output <- data.frame(nps = NA,
+                       lower = NA,
+                       upper = NA)
+
+for (column in 1:num_iterations) #will do this for every column in the simulated dataset we're taking in
+    output <- rbind(output, nps_table(data_set[,column]))
+
+  final <- output[is.na(output$nps) == F,]
+  return(final)
+}  
+
+
+#Cbind related datasets, and create a flag for when they are significantly different (this works for increases in NPS)
+comb <- function(a, b) {
+  result <- cbind(a, b) 
+  
+  colnames(result) <- c('nps',
+                      'lower',
+                      'upper',
+                      'nps2',
+                      'lower2',
+                      'upper2')
+  result$lower_is_lower <- ifelse(result$nps2 - result$nps > 0, 1, 0)
+  result$sig <- 0
+  result$sig[result$lower_is_lower == 1] <- ifelse(result$upper[result$lower_is_lower == 1] > 
+                                                     result$lower2[result$lower_is_lower == 1], 0, 1)
+  
+  return(result)
+}
+
+
+comb_drop <- function(a, b) {
+  result <- cbind(a, b) 
+  
+  colnames(result) <- c('nps',
+                      'lower',
+                      'upper',
+                      'nps2',
+                      'lower2',
+                      'upper2')
+  result$lower_is_lower <- ifelse(result$nps2 - result$nps < 0, 1, 0)
+  result$sig <- 0
+  result$sig[result$lower_is_lower == 1] <- ifelse(result$lower[result$lower_is_lower == 1] < 
+                                                     result$upper2[result$lower_is_lower == 1], 0, 1)
+  
+  return(result)
+}
+```
+
+Create the re-sampled simulations and save the results file so you can read it in and not have to re-run every time.
+
+```{r run the main simulation, echo = T, eval = F}
+
+dataset1 <- cbind(p30, p40, p50, p60, p70, p80, #increase of 10
+                  p30, p35, p50, p55, p60, p70, p75, p80) #increase of 5
+dataset2 <- cbind(p40, p50, p60, p70, p80, p90, #increase of 10
+                  p35, p40, p55, p60, p65, p75, p80, p85) #increase of 5
+
+pct_sig <- data.frame(pct_sig = NA,
+                      sample_size = NA,
+                      baseline_nps = NA,
+                      comparison_nps = NA)
+
+for(i in 1:length(sample_sizes))
+  for(col in 1:14) #number of columns in dataset1, dataset2
+     pct_sig <- rbind(pct_sig,
+                      comb(
+        all_nps(
+          sample_function(dataset1[,col], sample_sizes[i], times)),
+        all_nps(sample_function(dataset2[,col], sample_sizes[i], times))
+      ) %>%
+        summarise(pct_sig = round(mean(sig) * 100, 1),
+                  sample_size = sample_sizes[i],
+                  baseline_nps = colnames(dataset1)[col],
+                  comparison_nps = colnames(dataset2)[col]))
+
+
+pct_sig1 <- pct_sig %>%
+  filter(is.na(pct_sig) == F)
+
+pct_sig1$baseline_nps <- sub("p", "", pct_sig1$baseline_nps)
+pct_sig1$comparison_nps <- sub("p", "", pct_sig1$comparison_nps)
+pct_sig1$nps_increase <- as.numeric(pct_sig1$comparison_nps) - as.numeric(pct_sig1$baseline_nps)
+
+
+#write.csv(pct_sig1, file = "powersim_1000.csv")
+
+
+```
+
+
+I also ran a version for sample sizes needed to detect big effects, which are rare. This would at least allow us to rule out major breakages/tanking of NPS with smaller sample sizes even if it is not feasible to wait for enough power to test for NPS lift.
+
+```{r simulation for big drop, eval = F, echo = T}
+
+dataset1 <- cbind(p80, p70, p60, p50, p40, #drops of 40
+                  p80, p70, p60, p50, p40) #drops of 20
+dataset2 <- cbind(p40, p30, p20, p10, p0,  #drops of 40
+                  p60, p50, p40, p30, p20) #drops of 20
+
+pct_sig <- data.frame(pct_sig = NA,
+                      sample_size = NA,
+                      baseline_nps = NA,
+                      comparison_nps = NA)
+
+for(i in 1:length(sample_sizes))
+  for(col in 1:10) #number of columns in dataset1, dataset2
+     pct_sig <- rbind(pct_sig,
+                      comb_drop(
+        all_nps(
+          sample_function(dataset1[,col], sample_sizes[i], times)),
+        all_nps(sample_function(dataset2[,col], sample_sizes[i], times))
+      ) %>%
+        summarise(pct_sig = round(mean(sig) * 100, 1),
+                  sample_size = sample_sizes[i],
+                  baseline_nps = colnames(dataset1)[col],
+                  comparison_nps = colnames(dataset2)[col]))
+
+pct_sig1 <- pct_sig %>%
+  filter(is.na(pct_sig) == F)
+
+pct_sig1$baseline_nps <- sub("p", "", pct_sig1$baseline_nps)
+pct_sig1$comparison_nps <- sub("p", "", pct_sig1$comparison_nps)
+pct_sig1$nps_drop <- as.numeric(pct_sig1$baseline_nps) - as.numeric(pct_sig1$comparison_nps)
+
+#write.csv(pct_sig1, file = "powersim_1000_drop.csv")
+
+```
+
