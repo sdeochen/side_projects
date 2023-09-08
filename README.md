@@ -1,5 +1,7 @@
 # side_projects
-Hosting some just-for-fun projects.
+Hosting some just-for-fun projects I did when off of work or on the side. Links/pages still works in progress. 
 
-1. **The Gospel Coalition Project.** *Summer 2022.* I wanted to know what percentage of TGC authors were women, and how their bio's and self-descriptions might differ from male authors' bios. I also wanted to learn how to scrape web-pages using R. There was no API available from TGC for easy data scraping so I built my own scraper to grab author bios, names, and also titles of their work. 
-2. **r/osu vs. r/uofm Reddit.** *Fall 2022* Quick scrape of Ohio State and University of Michigan subreddit titles to look for most frequent terms. OSU had more sports related titles, UM posters had squirrel and comptuer science/coursework related titles.
+1. **NPS [margin of error]() & [power]() simulations**. Love it or hate it, NPS is a popular business sentiment metric. It's calculated from the response to the survey question, "How likely are you to recommend [business] to a friend or family member?", or some variation of that. The NPS score is a group-level metric, computed as the difference between % of people answering 9 & 10 - % of people answering 0 - 6. Since it's not a regular % score or an average, standard power analyses don't work. I did some rough simulations to estimate sample sizes needed for different levels of confidence in NPS scores.
+2. **The Gospel Coalition Project.** *Summer 2022.* I wanted to know what percentage of TGC authors were women, and how their bio's and self-descriptions might differ from male authors' bios. I also wanted to learn how to scrape web-pages using R. There was no API available from TGC for easy data scraping so I worked around this with rvest to build my own scraper and grab author bios, names, and also titles of their work. 
+2. **r/osu vs. r/uofm Reddit.** *Fall 2022* Quick scrape of Ohio State and University of Michigan subreddit titles to look for most frequent terms. OSU had more sports related titles, UM posters had squirrel and computer science/coursework related titles.
+
